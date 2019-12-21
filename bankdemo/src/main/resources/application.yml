@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: bank-damo
+
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    content-type: text/html
+  cloud:
+    zookeeper:
+      connect-string: 127.0.0.1:2181
+      discovery:
+        enabled: true
+        instance-host: 192.168.101.81
+        instance-port: ${server.port}
+logging:
+  level:
+    root: info
+  config: classpath:logback.xml
+server:
+  port: 8201
+  servlet:
+    context-path: /webapp
+motan:
+  registry:
+    regProtocol: zookeeper
+    address: 127.0.0.1:2181
+    requestTimeout: 500
+    connectTimeout: 3000
+  protocol:
+    name: motan
+    maxClientConnection: 150
+    minWorkerThread: 100
+    maxWorkerThread: 200
+    maxContentLength: 104857600
+    filter: statistic
+  annotation:
+    package: com.yth
+  server:
+    registry: motanRegistryConfig
+  client:
+    protocol : motan
+    check : false
+    requestTimeout : 30000 #请求超时时间(毫秒)
+    connectTimeout : 5000 #连接超时时间(毫秒)
+    registry : motanRegistryConfig
+    basicReferer: motanClientBasicConfig
+

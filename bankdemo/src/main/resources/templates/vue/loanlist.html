@@ -1,0 +1,311 @@
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Loan Account</title>
+    <style type="text/css">
+        [v-cloak] {
+            display: none
+        }
+        table {
+            border: 1px solid #ccc;
+            padding: 0;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin-top: 10px;
+            width: 100%;
+        }
+        table td,
+        table th {
+            height: 30px;
+            border: 1px solid #ccc;
+            background: #fff;
+            font-size: 15px;
+            padding: 3px 3px 3px 8px;
+        }
+        table th:first-child {
+            width: 30px;
+        }
+        .container,
+        .st {
+            width: 1000px;
+            margin: 10px auto 0;
+            font-size: 13px;
+            font-family: 'Microsoft YaHei'
+        }
+        .container .search {
+            font-size: 15px;
+            padding: 4px;
+        }
+        .container .add {
+            padding: 5px 15px;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 6;
+            background: rgba(0, 0, 0, 0.7);
+        }
+        .overlay td:first-child {
+            width: 66px;
+        }
+        .overlay .con {
+            position: absolute;
+            width: 420px;
+            min-height: 300px;
+            background: #fff;
+            left: 50%;
+            top: 50%;
+            -webkit-transform: translate3d(-50%, -50%, 0);
+            transform: translate3d(-50%, -50%, 0);
+            /*margin-top: -150px;*/
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="st">
+        <h1>Loan</h1>
+        <p><a href="http://127.0.0.1:8201/webapp/index">To Home</a></p>
+    </div>
+    <div class="container" id="app">
+    	 <div class="form-group">
+    	     <label for="cardNo" class="search">cardNo</label>
+	         <input type="text" class="search" name="cardNum" id="cardNum" placeholder="cardNo"/>
+	         <label for="identityNum" class="search">identityNum</label>
+	         <input type="text" class="search" name="identityNum" id="identityNum" placeholder="identityNum"/>
+
+	         <!--   <input type="button" class="add" @click="query" value="query">-->
+	         <input type="button" class="add" @click="toquery" value="query">
+	         <input type="button" class="add" @click="toquerycredit" value="queryCredit">
+	      
+	    </div> 
+        <div>
+            <table>
+                <tr>
+                    <th>#</th>
+          		    <th>Name</th>
+                    <th>cardNo</th>
+                    <th>identityNum</th>
+                    <th>loanLimit</th>
+                    <th>balance</th>
+                    <th>rate</th>
+                    <th>interest</th>
+                    <th>count</th>
+                    <th>beginTime</th>
+                    <th>endTime</th>
+                </tr>
+                <tr v-cloak v-for="(item, index) of slist">
+                    <td>{{item.id}}</td>
+                    <td>{{item.name}}</td>
+                    <td>{{item.cardNum}}</td>
+                    <td>{{item.identityNum}}</td>
+                    <td>{{item.loanLimit}}</td>
+                    <td>{{item.balance}}</td>
+                    <td>{{item.rate}}</td>
+                    <td>{{item.interest}}</td>
+                    <td>{{item.count}}</td>
+                    <td>{{item.beginTime}}</td>
+                    <td>{{item.endTime}}</td>                  
+                </tr>
+            </table>
+        </div>
+
+        <model :list='selectedlist' :isactive="isActive" v-cloak @change="changeOverlay" @modify="modify" @toquery="toquery"></model>
+          
+    </div>
+</body>
+<script type="text/javascript" th:src="@{vue.js}"></script>
+<script type="text/javascript">
+    Vue.component('model', {
+        props: ['list', 'isactive'],
+        template: `<div class="overlay" v-show="isactive">
+                        <div class="con">
+                        <h2 class="title">User Credit</h2>
+                        <div class="content">
+                        <table>
+                        <tr>
+                        <td>name</td>
+                        <td><input type="text" readonly="readonly" v-model="modifylist.name"></td>
+                        </tr>
+                        <tr>
+                        <td>cardNo</td>
+                        <td><input type="text" readonly="readonly" v-model="modifylist.cardNum"></td>
+                        </tr>
+                        <tr>
+                        <td>credit</td>
+                        <td><input type="text" v-model="modifylist.creditDesc"></td>
+                        </tr>
+                        <tr>
+                        <td>loan money</td>
+                        <td><input type="text" v-model="modifylist.balance"></td>
+                        </tr>
+                        <tr>
+                        <td>lengh (month)</td>
+                        <td><input type="text" v-model="modifylist.count"></td>
+                        </tr>
+                    
+                        </table>
+                        <p>           
+                        <input type="button" @click="modify(modifylist)" value="load">
+                        <input type="button" @click="changeActive" value="back">
+                        </p>
+                        </div>
+                        </div>
+                    </div>`,
+        computed: {
+            modifylist() {
+                return this.list;
+            }
+        },
+        methods: {
+            changeActive() {
+                this.$emit('change');
+            },
+            modify(data) {
+            	console.log(data)
+            	var xhr = new XMLHttpRequest();
+            	var that = this;
+        		xhr.onreadystatechange = function (){
+        			if(xhr.readyState == 4 && xhr.status == 200){
+      					console.log(1111)
+        				that.$emit('change');
+        				that.$emit('toquery');
+        			}
+        		}
+        		var url = 'http://127.0.0.1:8201/webapp/bank/rest/loan';
+        		xhr.open('post',url);
+        		xhr.setRequestHeader("Content-Type","application/json");
+        		xhr.send(JSON.stringify(data));
+                /* this.$emit('modify', this.modifylist); */
+            }
+        }
+    });
+         
+    
+    var app = new Vue({
+        el: '#app',
+        data: {
+            isActive: false,
+            isActive1: false,
+            isActive2: false,
+            isActive3: false,
+            selected: -1,
+            selectedlist: {},
+            slist: [],
+            searchlist: [],
+            detaillist:[],
+            list: []
+        },
+        created() {
+        	
+        },
+        methods: {
+            // 修改数据
+            showOverlay(index) {
+                this.selected = index;
+                this.selectedlist = this.slist[index];
+                this.changeOverlay();
+            },
+            
+           
+            // 点击保存按钮
+            modify(arr) {
+                if (this.selected > -1) {
+                    Vue.set(this.list, this.selected, arr);
+                    this.selected = -1;
+                } else {
+                    this.list.push(arr);
+                }
+                this.setSlist(this.list);
+                this.changeOverlay();
+            },
+            add: function () {
+            
+                this.isActive2 = true;
+            },
+            toquery: function () {
+        		var doms = document.getElementById("cardNum");
+        		var cardNum = doms.value;
+        		console.log(cardNum);
+        		var doms1 = document.getElementById("identityNum");
+        		var identityNum = doms1.value;
+        		
+        	
+        		
+        		 
+        	  	var xhr = new XMLHttpRequest();
+            	var that = this;
+        		xhr.onreadystatechange = function (){
+        			if(xhr.readyState == 4 && xhr.status == 200){
+        				console.log(xhr.responseText)
+        				that.setSlist(JSON.parse(xhr.responseText));
+        			}
+        		}
+        		
+        		var url = 'http://127.0.0.1:8201/webapp/bank/rest/queryLoan?cardNum=' + cardNum+'&identityNum=' + identityNum;
+            	
+        		xhr.open('get',url,true);
+        		xhr.setRequestHeader("Content-Type","multipart/form-data");
+        		xhr.send({cardNum: cardNum,identityNum: identityNum});
+        		
+        	},
+        	
+        	 toquerycredit: function () {
+         		var doms1 = document.getElementById("identityNum");
+         		var identityNum = doms1.value;
+         		
+         	
+         		
+         		 
+         	  	var xhr = new XMLHttpRequest();
+             	var that = this;
+         		xhr.onreadystatechange = function (){
+         			if(xhr.readyState == 4 && xhr.status == 200){
+         				console.log(xhr.responseText)
+         				that.setDlist(JSON.parse(xhr.responseText));
+         				that.changeOverlay();
+         			}
+         		}
+         		
+         		var url = 'http://127.0.0.1:8201/webapp/bank/rest/toquerycredit?identityNum=' + identityNum;
+             	
+         		xhr.open('get',url,true);
+         		xhr.setRequestHeader("Content-Type","multipart/form-data");
+         		xhr.send({cardNum: cardNum,identityNum: identityNum});
+         		
+         	},
+        	
+          
+            changeOverlay() {
+				this.selected = -1;
+                this.isActive = !this.isActive;
+            },
+            
+           
+            
+            // 获取需要渲染到页面中的数据
+            setSlist(arr) {
+                this.slist = JSON.parse(JSON.stringify(arr));
+            },
+            setList(arr) {
+            	this.list = JSON.parse(JSON.stringify(arr));
+            },
+            // 获取需要渲染到页面中的数据
+            setDlist(arr) {
+                this.selectedlist = JSON.parse(JSON.stringify(arr));
+            }
+        },
+               
+         
+        
+        
+        watch: {
+        }
+    })
+</script>
+</html>

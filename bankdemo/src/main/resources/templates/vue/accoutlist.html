@@ -1,0 +1,521 @@
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Deposit Account</title>
+    <style type="text/css">
+        [v-cloak] {
+            display: none
+        }
+        table {
+            border: 1px solid #ccc;
+            padding: 0;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin-top: 10px;
+            width: 100%;
+        }
+        table td,
+        table th {
+            height: 30px;
+            border: 1px solid #ccc;
+            background: #fff;
+            font-size: 15px;
+            padding: 3px 3px 3px 8px;
+        }
+        table th:first-child {
+            width: 30px;
+        }
+        .container,
+        .st {
+            width: 1000px;
+            margin: 10px auto 0;
+            font-size: 13px;
+            font-family: 'Microsoft YaHei'
+        }
+        .container .search {
+            font-size: 15px;
+            padding: 4px;
+        }
+        .container .add {
+            padding: 5px 15px;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 6;
+            background: rgba(0, 0, 0, 0.7);
+        }
+        .overlay td:first-child {
+            width: 66px;
+        }
+        .overlay .con {
+            position: absolute;
+            width: 420px;
+            min-height: 300px;
+            background: #fff;
+            left: 50%;
+            top: 50%;
+            -webkit-transform: translate3d(-50%, -50%, 0);
+            transform: translate3d(-50%, -50%, 0);
+            /*margin-top: -150px;*/
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="st">
+        <h1>Deposit Account</h1>
+        <p><a href="http://127.0.0.1:8201/webapp/loanlist">To Loan</a></p>
+    </div>
+    <div class="container" id="app">
+    	 <div class="form-group">
+    	     <label for="cardNo" class="search">cardNo</label>
+	         <input type="text" class="search" name="cardNum" id="cardNum" placeholder="cardNo"/>
+	         <label for="password" class="search">password</label>
+	         <input type="password" class="search" name="password" id="password" placeholder="password"/>
+
+	         <!--   <input type="button" class="add" @click="query" value="query">-->
+	         <input type="button" class="add" @click="toquery" value="query">
+	         <input type="button" class="add" @click="add" value="create">
+	    </div> 
+        <div>
+            <table>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>CardNo</th>
+                    <th>IdentityNo</th>
+                    <th>PhoneNo</th>
+                    <th>Balance</th>
+                    <th>Interest</th>
+                    <th>Option</th>
+                </tr>
+                <tr v-cloak v-for="(item, index) of slist">
+                    <td>{{item.id}}</td>
+                    <td>{{item.name}}</td>
+                    <td>{{item.cardNum}}</td>
+                    <td>{{item.identityNum}}</td>
+                    <td>{{item.phoneNum}}</td>
+                    <td>{{item.balance}}</td>
+                    <td>{{item.interest}}</td>
+                    <td><a href="javascript:;" @click="showOverlay3(index)">detail</a> | <a href="javascript:;" @click="showOverlay(index)">deposit</a>| <a href="javascript:;" @click="showOverlay1(index)">draw</a></td>
+                </tr>
+            </table>
+        </div>
+
+        <model :list='selectedlist' :isactive="isActive" v-cloak @change="changeOverlay" @modify="modify" @getdata="getData"></model>
+        <draw :list='selectedlist' :isactive1="isActive1" v-cloak @change1="changeOverlay1" @modify1="modify" @getdata1="getData"></draw>
+        <newaccount :list='selectedlist' :isactive2="isActive2" v-cloak @change2="changeOverlay2" @modify2="modify" @getdata2="getData"></newaccount>
+        <detaillist :detaillist='detaillist' :isactive3="isActive3" v-cloak @change3="changeOverlay3"  ></detaillist>
+    
+    </div>
+</body>
+<script type="text/javascript" th:src="@{vue.js}"></script>
+<script type="text/javascript">
+    Vue.component('model', {
+        props: ['list', 'isactive'],
+        template: `<div class="overlay" v-show="isactive">
+                        <div class="con">
+                        <h2 class="title">Deposit</h2>
+                        <div class="content">
+                        <table>
+                        <tr>
+                        <td>name</td>
+                        <td><input type="text" readonly="readonly" v-model="modifylist.name"></td>
+                        </tr>
+                        <tr>
+                        <td>cardNum</td>
+                        <td><input type="text" readonly="readonly" v-model="modifylist.cardNum"></td>
+                        </tr>
+                        <tr>
+                        <td> money</td>
+                        <td><input type="text" v-model="modifylist.balance"></td>
+                        </tr>
+                        </table>
+                        <p>
+             
+                        <input type="button" @click="modify(modifylist)" value="commit">
+                        <input type="button" @click="changeActive" value="back">
+                        </p>
+                        </div>
+                        </div>
+                    </div>`,
+        computed: {
+            modifylist() {
+                return this.list;
+            }
+        },
+        methods: {
+            changeActive() {
+                this.$emit('change');
+            },
+            modify(data) {
+            	console.log(data)
+            	var xhr = new XMLHttpRequest();
+            	var that = this;
+        		xhr.onreadystatechange = function (){
+        			if(xhr.readyState == 4 && xhr.status == 200){
+      					console.log(1111)
+        				that.$emit('change');
+        				that.$emit('getdata');
+        			}
+        		}
+        		var url = 'http://127.0.0.1:8201/webapp/bank/rest/deposit';
+        		xhr.open('post',url);
+        		xhr.setRequestHeader("Content-Type","application/json");
+        		xhr.send(JSON.stringify(data));
+                /* this.$emit('modify', this.modifylist); */
+            }
+        }
+    });
+    
+    Vue.component('draw', {
+        props: ['list', 'isactive1'],
+        template: `<div class="overlay" v-show="isactive1">
+                        <div class="con">
+                        <h2 class="title">draw</h2>
+                        <div class="content">
+                        <table>
+                        <tr>
+                        <td>name</td>
+                        <td><input type="text" readonly="readonly" v-model="modifylist.name"></td>
+                        </tr>
+                        <tr>
+                        <td>cardNum</td>
+                        <td><input type="text" readonly="readonly" v-model="modifylist.cardNum"></td>
+                        </tr>
+                        <tr>
+                        <td> money</td>
+                        <td><input type="text" v-model="modifylist.balance"></td>
+                        </tr>
+                        </table>
+                        <p>
+
+             
+                        <input type="button" @click="modify1(modifylist)" value="commit">
+                        <input type="button" @click="changeActive1" value="back">
+                        </p>
+                        </div>
+                        </div>
+                    </div>`,
+        computed: {
+            modifylist() {
+                return this.list;
+            }
+        },
+        methods: {
+            changeActive1() {
+                this.$emit('change1');
+            },
+            modify1(data) {
+            	console.log(data)
+            	var xhr = new XMLHttpRequest();
+            	var that = this;
+        		xhr.onreadystatechange = function (){
+        			if(xhr.readyState == 4 && xhr.status == 200){
+      					console.log(1111)
+        				that.$emit('change1');
+        				that.$emit('getdata1');
+        			}
+        		}
+        		var url = 'http://127.0.0.1:8201/webapp/bank/rest/draw';
+        		xhr.open('post',url);
+        		xhr.setRequestHeader("Content-Type","application/json");
+        		xhr.send(JSON.stringify(data));
+                /* this.$emit('modify', this.modifylist); */
+            }
+        }
+    });
+    
+    Vue.component('newaccount', {
+        props: ['list', 'isactive2'],
+        template: `<div class="overlay" v-show="isactive2">
+                        <div class="con">
+                        <h2 class="title">Create Accout</h2>
+                        <div class="content">
+                        <table>
+                        <tr>
+                        <td>id</td>
+                        <td><input type="text"  v-model="modifylist.id"></td>
+                        </tr>
+                        <tr>
+                        <td>name</td>
+                        <td><input type="text"  v-model="modifylist.name"></td>
+                        </tr>
+                        <tr>
+                        <td>password</td>
+                        <td><input type="password"  v-model="modifylist.password"></td>
+                        </tr>
+                        <tr>
+                        <td>identityNum</td>
+                        <td><input type="text"  v-model="modifylist.identityNum"></td>
+                        </tr>
+                        <tr>
+                        <td>cardNum</td>
+                        <td><input type="text"  v-model="modifylist.cardNum"></td>
+                        </tr>
+                        </tr>
+                        <tr>
+                        <td>phoneNum</td>
+                        <td><input type="text" v-model="modifylist.phoneNum"></td>
+                        </tr>
+                        <tr>
+                        <td>count</td>
+                        <td><input type="text" v-model="modifylist.count"></td>
+                        </tr>
+                        <tr>
+                        <td>type</td>
+                        <td><input type="text" v-model="modifylist.type"></td>
+                        </tr>   
+                        
+                        
+                        </table>
+                        <p>
+
+             
+                        <input type="button" @click="modify2(modifylist)" value="commit">
+                        <input type="button" @click="changeActive2" value="back">
+                        </p>
+                        </div>
+                        </div>
+                    </div>`,
+        computed: {
+            modifylist() {
+                return this.list;
+            }
+        },
+        methods: {
+            changeActive2() {
+                this.$emit('change2');
+            },
+            modify2(data) {
+            	console.log(data)
+            	var xhr = new XMLHttpRequest();
+            	var that = this;
+        		xhr.onreadystatechange = function (){
+        			if(xhr.readyState == 4 && xhr.status == 200){
+        				that.$emit('change2');
+        				that.$emit('getdata2');
+        			}
+        		}
+        		var url = 'http://127.0.0.1:8201/webapp/bank/rest/addaccount';
+        		xhr.open('post',url);
+        		xhr.setRequestHeader("Content-Type","application/json");
+        		xhr.send(JSON.stringify(data));
+            }
+        }
+    });
+    
+    Vue.component('detaillist', {
+        props: ['detaillist', 'isactive3'],
+        template: `<div class="container" v-show="isactive3">
+                        <div class="con">
+                        <h2 class="title">Details</h2>
+                        <div class="content">
+                        <table>
+                        <tr>
+                        <th>#</th>
+                        <th>cardNum</th>
+                        <th>type</th>
+                        <th>change</th>
+                        <th>balance</th>
+                        <th>time</th>
+                    
+                    </tr>
+                    <tr v-cloak v-for="(item, index) of detaillist">
+                        <td>{{item.id}}</td>
+                        <td>{{item.cardNum}}</td>
+                        <td>{{item.type}}</td>
+                        <td>{{item.change}}</td>
+                        <td>{{item.balance}}</td>
+                        <td>{{item.time}}</td>
+                    </tr>
+                        
+                        
+                        </table>
+                        <p>
+
+                        <input type="button" @click="changeActive3" value="back">
+                        </p>
+                        </div>
+                        </div>
+                    </div>`,
+        computed: {
+            modifylist() {
+                return this.list;
+            }
+        },
+        methods: {
+            changeActive3() {
+                this.$emit('change3');
+            }
+        }
+    });
+    
+    
+    var app = new Vue({
+        el: '#app',
+        data: {
+            isActive: false,
+            isActive1: false,
+            isActive2: false,
+            isActive3: false,
+            selected: -1,
+            selectedlist: {},
+            slist: [],
+            searchlist: [],
+            detaillist:[],
+            list: []
+        },
+        created() {
+        	this.getData()
+        },
+        methods: {
+            // 修改数据
+            showOverlay(index) {
+                this.selected = index;
+                this.selectedlist = this.slist[index];
+                this.changeOverlay();
+            },
+            
+            // 修改数据
+            showOverlay1(index) {
+                this.selected = index;
+                this.selectedlist = this.slist[index];
+                this.changeOverlay1();
+            },
+            
+            // 修改数据
+            showOverlay2(index) {
+                this.selected = index;
+                this.selectedlist = this.slist[index];
+                this.changeOverlay2();
+            },
+            
+            // 修改数据
+            showOverlay3(index) {
+                this.selected = index;
+                this.selectedlist = this.slist[index];
+                var cardNum = this.selectedlist['cardNum']
+              	var xhr = new XMLHttpRequest();
+            	var that = this;
+        		xhr.onreadystatechange = function (){
+        			if(xhr.readyState == 4 && xhr.status == 200){
+        				console.log("**********"+xhr.responseText)
+        				that.setDlist(JSON.parse(xhr.responseText));
+        			}
+        		}
+        		
+        		var url = 'http://127.0.0.1:8201/webapp/bank/rest/queryDetails?cardNum=' + cardNum;
+            	
+        		xhr.open('get',url,true);
+        		xhr.setRequestHeader("Content-Type","multipart/form-data");
+        		xhr.send({cardNum: cardNum});
+                
+                this.changeOverlay3();
+            },
+            
+            getData(){
+            	var xhr = new XMLHttpRequest();
+            	var that = this;
+        		xhr.onreadystatechange = function (){
+        			if(xhr.readyState == 4 && xhr.status == 200){
+        				console.log(xhr.responseText)
+        				that.setSlist(JSON.parse(xhr.responseText));
+        			}
+        		}
+        		var url = 'http://127.0.0.1:8201/webapp/bank/rest/alllist';
+        		xhr.open('get',url,true);
+        		xhr.setRequestHeader("Content-Type","multipart/form-data");
+        		xhr.send('');
+            },
+            // 点击保存按钮
+            modify(arr) {
+                if (this.selected > -1) {
+                    Vue.set(this.list, this.selected, arr);
+                    this.selected = -1;
+                } else {
+                    this.list.push(arr);
+                }
+                this.setSlist(this.list);
+                this.changeOverlay();
+            },
+            add: function () {
+            
+                this.isActive2 = true;
+            },
+            toquery: function () {
+        		var doms = document.getElementById("cardNum");
+        		var cardNum = doms.value;
+        		console.log(cardNum);
+        		var doms1 = document.getElementById("password");
+        		var password = doms1.value;
+        		
+        	
+        		
+        		 
+        	  	var xhr = new XMLHttpRequest();
+            	var that = this;
+        		xhr.onreadystatechange = function (){
+        			if(xhr.readyState == 4 && xhr.status == 200){
+        				console.log(xhr.responseText)
+        				that.setSlist(JSON.parse(xhr.responseText));
+        			}
+        		}
+        		
+        		var url = 'http://127.0.0.1:8201/webapp/bank/rest/queryDeposit?cardNum=' + cardNum+'&password=' + password;
+            	
+        		xhr.open('get',url,true);
+        		xhr.setRequestHeader("Content-Type","multipart/form-data");
+        		xhr.send({cardNum: cardNum,password: password});
+        		
+        	},
+            // delete list in index location
+            del(index) {
+                this.list.splice(index, 1);
+                this.setSlist(this.list);
+            },
+            changeOverlay() {
+				this.selected = -1;
+                this.isActive = !this.isActive;
+            },
+            
+            changeOverlay1() {
+				this.selected = -1;
+                this.isActive1 = !this.isActive1;
+            },
+            
+            changeOverlay2() {
+				this.selected = -1;
+                this.isActive2 = !this.isActive2;
+            },
+            changeOverlay3() {
+				this.selected = -1;
+                this.isActive3 = !this.isActive3;
+            },
+            // 获取需要渲染到页面中的数据
+            setSlist(arr) {
+                this.slist = JSON.parse(JSON.stringify(arr));
+            },
+            setList(arr) {
+            	this.list = JSON.parse(JSON.stringify(arr));
+            },
+            // 获取需要渲染到页面中的数据
+            setDlist(arr) {
+                this.detaillist = JSON.parse(JSON.stringify(arr));
+            }
+        },
+               
+         
+        
+        
+        watch: {
+        }
+    })
+</script>
+</html>
